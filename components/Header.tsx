@@ -16,7 +16,7 @@ const Header: React.FC<HeaderProps> = ({ money, onTitleClick, weather }) => {
   };
 
   return (
-    <header className="p-4 bg-gray-900/60 backdrop-blur-md border-b-2 border-green-500/50 flex justify-between items-center sticky top-4 z-40 rounded-xl">
+    <header className="p-4 bg-gray-900/60 backdrop-blur-md border-b-2 border-green-500/50 flex justify-between items-center sticky top-4 z-40">
       <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-500">
         Tanaman T
         <span 

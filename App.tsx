@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Shop from './components/Shop';
@@ -26,7 +27,7 @@ const App: React.FC = () => {
     sizeBonus: 0,
     superDuperSpeed: 0,
     pets: { racoon: 0, griffin: 0, chicken: 0, fox: 0, ulat: 0, glitch: 0, glitchFox: 0, golemGlitch: 0 },
-    equippedPets: [null, null, null, null, null],
+    equippedPets: [null, null, null],
     petShardGold: 0,
     petShardDiamond: 0,
     petShardRainbow: 0,
@@ -80,7 +81,8 @@ const App: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentPage, setCurrentPage] = useState<'garden' | 'events'>('garden');
 
-  const [abilityCooldowns, setAbilityCooldowns] = useState<(number | null)[]>([null, null, null, null, null]);
+  const [abilityCooldowns, setAbilityCooldowns] = useState<(number | null)[]>([null, null, null]);
+  const [passiveAbilityCooldowns, setPassiveAbilityCooldowns] = useState({ gold: 60, diamond: 60, rainbow: 60 });
 
   const showNotification = useCallback((message: NotificationMessage) => {
     setNotification(message);
@@ -170,7 +172,7 @@ const App: React.FC = () => {
         sizeBonus: 0,
         superDuperSpeed: 0,
         pets: { racoon: 0, griffin: 0, chicken: 0, fox: 0, ulat: 0, glitch: 0, glitchFox: 0, golemGlitch: 0 },
-        equippedPets: [null, null, null, null, null],
+        equippedPets: [null, null, null],
         petShardGold: 0,
         petShardDiamond: 0,
         petShardRainbow: 0,
@@ -182,8 +184,8 @@ const App: React.FC = () => {
       
       const loadedEquippedPets = savedState.inventory.equippedPets || [];
       const equippedPets = Array.isArray(loadedEquippedPets)
-        ? [...loadedEquippedPets, null, null, null, null, null].slice(0, 5)
-        : [null, null, null, null, null];
+        ? [...loadedEquippedPets, null, null, null].slice(0, 3)
+        : [null, null, null];
 
 
       const mergedInventory = {
@@ -1059,7 +1061,7 @@ const App: React.FC = () => {
             })
           );
   
-          // 2. & 3. Update Pet Cooldowns and Trigger Abilities
+          // 2. Update Equipped Pet Cooldowns and Trigger Abilities
           setAbilityCooldowns(prevCooldowns => {
             const newCooldowns = [...prevCooldowns];
             
@@ -1157,73 +1159,79 @@ const App: React.FC = () => {
                     }
                 }
             });
-
-            if ((inventory.goldenPets?.length || 0) > 0) {
-                if(newCooldowns[2] === undefined || newCooldowns[2] === null) newCooldowns[2] = 60;
-                newCooldowns[2] = newCooldowns[2]! - 1;
-                if(newCooldowns[2]! <= 0) {
-                    setPlots(currentPlots => {
-                        const eligiblePlots = currentPlots.filter(p => p.status !== 'empty' && !p.mutations.includes('gold'));
-                        if (eligiblePlots.length > 0 && Math.random() < 0.98) {
-                            const targetPlot = eligiblePlots[Math.floor(Math.random() * eligiblePlots.length)];
-                            showNotification({ text: `Pet Emas memberkati tanaman dengan mutasi Emas!`, type: 'info' });
-                            return applyMutation(currentPlots, targetPlot.id, 'gold');
-                        }
-                        return currentPlots;
-                    });
-                    newCooldowns[2] = 60;
-                }
-            }
-
-            if ((inventory.diamondPets?.length || 0) > 0) {
-                if(newCooldowns[3] === undefined || newCooldowns[3] === null) newCooldowns[3] = 60;
-                newCooldowns[3] = newCooldowns[3]! - 1;
-                if(newCooldowns[3]! <= 0) {
-                    setPlots(currentPlots => {
-                        const eligiblePlots = currentPlots.filter(p => p.status !== 'empty' && !p.mutations.includes('diamond'));
-                        if (eligiblePlots.length > 0 && Math.random() < 0.98) {
-                            const targetPlot = eligiblePlots[Math.floor(Math.random() * eligiblePlots.length)];
-                            showNotification({ text: `Pet Diamond memberkati tanaman dengan mutasi Diamond!`, type: 'info' });
-                            return applyMutation(currentPlots, targetPlot.id, 'diamond');
-                        }
-                        return currentPlots;
-                    });
-                    newCooldowns[3] = 60;
-                }
-            }
-            
-            if (rainbowPetCount > 0) {
-                if(newCooldowns[4] === undefined || newCooldowns[4] === null) newCooldowns[4] = 60;
-                newCooldowns[4] = newCooldowns[4]! - 1;
-                if(newCooldowns[4]! <= 0) {
-                    for (let i = 0; i < rainbowPetCount; i++) {
-                        if (Math.random() < 0.01) {
-                            setPlots(currentPlots => {
-                                const eligiblePlots = currentPlots.filter(p => p.status !== 'empty' && !p.mutations.includes('gold'));
-                                if (eligiblePlots.length > 0) {
-                                    const targetPlot = eligiblePlots[Math.floor(Math.random() * eligiblePlots.length)];
-                                    showNotification({ text: `Pet Pelangi memberkati tanaman dengan mutasi Emas!`, type: 'info' });
-                                    return applyMutation(currentPlots, targetPlot.id, 'gold');
-                                }
-                                return currentPlots;
-                            });
-                        }
-                        if (Math.random() < 0.01) {
-                            setPlots(currentPlots => {
-                                const eligiblePlots = currentPlots.filter(p => p.status === 'ready' && !p.boosted);
-                                if (eligiblePlots.length > 0) {
-                                    const targetPlot = eligiblePlots[Math.floor(Math.random() * eligiblePlots.length)];
-                                    showNotification({ text: `Pet Pelangi memberkati tanaman dengan Panen Super!`, type: 'info' });
-                                    return currentPlots.map(p => p.id === targetPlot.id ? {...p, boosted: true} : p);
-                                }
-                                return currentPlots;
-                            });
-                        }
-                    }
-                    newCooldowns[4] = 60; // Reset
-                }
-            }
             return newCooldowns;
+          });
+          
+          // 3. Update Passive Pet Cooldowns and Trigger Abilities
+          setPassiveAbilityCooldowns(prev => {
+              const newPassives = { ...prev };
+              const equippedGoldenPets = inventory.equippedPets.some(p => p && inventory.goldenPets.includes(p));
+              const equippedDiamondPets = inventory.equippedPets.some(p => p && inventory.diamondPets.includes(p));
+              const equippedRainbowPetsCount = inventory.equippedPets.filter(p => p !== null && inventory.rainbowPets.includes(p)).length;
+
+              if (equippedGoldenPets) {
+                  newPassives.gold -= 1;
+                  if (newPassives.gold <= 0) {
+                      newPassives.gold = 60; // Reset
+                      setPlots(currentPlots => {
+                          const eligiblePlots = currentPlots.filter(p => p.status !== 'empty' && !p.mutations.includes('gold'));
+                          if (eligiblePlots.length > 0 && Math.random() < 0.98) {
+                              const targetPlot = eligiblePlots[Math.floor(Math.random() * eligiblePlots.length)];
+                              showNotification({ text: `Pet Emas memberkati tanaman dengan mutasi Emas!`, type: 'info' });
+                              return applyMutation(currentPlots, targetPlot.id, 'gold');
+                          }
+                          return currentPlots;
+                      });
+                  }
+              }
+
+              if (equippedDiamondPets) {
+                  newPassives.diamond -= 1;
+                  if (newPassives.diamond <= 0) {
+                      newPassives.diamond = 60; // Reset
+                       setPlots(currentPlots => {
+                          const eligiblePlots = currentPlots.filter(p => p.status !== 'empty' && !p.mutations.includes('diamond'));
+                          if (eligiblePlots.length > 0 && Math.random() < 0.98) {
+                              const targetPlot = eligiblePlots[Math.floor(Math.random() * eligiblePlots.length)];
+                              showNotification({ text: `Pet Diamond memberkati tanaman dengan mutasi Diamond!`, type: 'info' });
+                              return applyMutation(currentPlots, targetPlot.id, 'diamond');
+                          }
+                          return currentPlots;
+                      });
+                  }
+              }
+            
+              if (equippedRainbowPetsCount > 0) {
+                  newPassives.rainbow -= 1;
+                  if (newPassives.rainbow <= 0) {
+                      newPassives.rainbow = 60; // Reset
+                      for (let i = 0; i < equippedRainbowPetsCount; i++) {
+                          if (Math.random() < 0.01) {
+                              setPlots(currentPlots => {
+                                  const eligiblePlots = currentPlots.filter(p => p.status !== 'empty' && !p.mutations.includes('gold'));
+                                  if (eligiblePlots.length > 0) {
+                                      const targetPlot = eligiblePlots[Math.floor(Math.random() * eligiblePlots.length)];
+                                      showNotification({ text: `Pet Pelangi memberkati tanaman dengan mutasi Emas!`, type: 'info' });
+                                      return applyMutation(currentPlots, targetPlot.id, 'gold');
+                                  }
+                                  return currentPlots;
+                              });
+                          }
+                          if (Math.random() < 0.01) {
+                              setPlots(currentPlots => {
+                                  const eligiblePlots = currentPlots.filter(p => p.status === 'ready' && !p.boosted);
+                                  if (eligiblePlots.length > 0) {
+                                      const targetPlot = eligiblePlots[Math.floor(Math.random() * eligiblePlots.length)];
+                                      showNotification({ text: `Pet Pelangi memberkati tanaman dengan Panen Super!`, type: 'info' });
+                                      return currentPlots.map(p => p.id === targetPlot.id ? {...p, boosted: true} : p);
+                                  }
+                                  return currentPlots;
+                              });
+                          }
+                      }
+                  }
+              }
+              return newPassives;
           });
 
           ageCounter++;
@@ -1446,8 +1454,8 @@ const App: React.FC = () => {
             onTitleClick={handleTitleClick} 
             weather={weather}
         />
-        <main className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 flex flex-col gap-6">
+        <main className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="lg:col-span-1 flex flex-col gap-6 lg:sticky lg:top-28">
             <div className="bg-gray-900/50 backdrop-blur-sm p-4 rounded-lg border border-gray-700">
                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
                   <button
@@ -1495,7 +1503,7 @@ const App: React.FC = () => {
               </div>
               <p className="text-center text-xs text-gray-400 mt-2">Biaya Upgrade: Rp {upgradeCost.toLocaleString('id-ID')}</p>
             </div>
-            {Array.from({ length: 5 }).map((_, index) => {
+            {Array.from({ length: 3 }).map((_, index) => {
               const petType = inventory.equippedPets[index];
               return (
                  <EquippedPetDisplay
